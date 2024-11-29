@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:pokemon/splash_screen.dart';
+import 'package:go_router/go_router.dart';
+import 'package:pokemon/routes.dart';
 
 void main() {
   runApp(const MyApp());
@@ -10,11 +11,11 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return MaterialApp.router(
       debugShowCheckedModeBanner: false,
-      title: 'Pokemon App',
-      theme: ThemeData(primarySwatch: Colors.blue),
-      home: const SplashScreen(),
+      routerConfig: GoRouter(
+        routes: $appRoutes,
+      ),
     );
   }
 }

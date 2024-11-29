@@ -4,8 +4,8 @@ import 'package:http/http.dart' as http;
 
 // HTTP Get request to fetch color from the species API.
 Future<String?> fetchPokemonColor(String pokemonName) async {
-
-  final url = Uri.parse('https://pokeapi.co/api/v2/pokemon-species/$pokemonName');
+  final url =
+      Uri.parse('https://pokeapi.co/api/v2/pokemon-species/$pokemonName');
   final response = await http.get(url);
   // parse JSON response to extract color
   if (response.statusCode == 200) {
@@ -14,7 +14,6 @@ Future<String?> fetchPokemonColor(String pokemonName) async {
   } else {
     throw Exception('Failed to fetch Pokémon color');
   }
-
 }
 
 Color getMaterialColor(String? colorName) {
