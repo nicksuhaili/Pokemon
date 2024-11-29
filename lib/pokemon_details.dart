@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
-import 'pokemon_utils.dart';
+import 'package:go_router/go_router.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'pokemon_utils.dart';
 
 class PokemonDetailsPage extends StatefulWidget {
   final String name;
@@ -18,41 +19,41 @@ class PokemonDetailsPage extends StatefulWidget {
 }
 
 class _PokemonDetailsPageState extends State<PokemonDetailsPage> {
-  Map<String, dynamic>? pokemonDetails; //declare to get details from api
-  String? pokemonColorName; //declare to get the color
-  bool isLoading = true;
+  Map<String, dynamic>? _pokemonDetails;
+  String? _pokemonColorName;
+  bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    fetchPokemonDetails(); //update the details once the data is fetch
-    fetchPokemonColorName();
+    _fetchPokemonDetails();
+    _fetchPokemonColorName();
   }
 
-  //http get req to fetch the pokemon details
-  Future<void> fetchPokemonDetails() async {
-    final url = Uri.parse('https://pokeapi.co/api/v2/pokemon/${widget.name}');  // use the passed widget
+  // HTTP GET request to fetch Pokémon details
+  Future<void> _fetchPokemonDetails() async {
+    final url = Uri.parse('https://pokeapi.co/api/v2/pokemon/${widget.name}');
     final response = await http.get(url);
 
     if (response.statusCode == 200) {
       setState(() {
-        pokemonDetails = jsonDecode(response.body);
-        isLoading = false;
+        _pokemonDetails = jsonDecode(response.body);
+        _isLoading = false;
       });
     } else {
       setState(() {
-        isLoading = false;
+        _isLoading = false;
       });
       throw Exception('Failed to load Pokémon details');
     }
   }
 
-  //pass the pokemon name to get the color from utils
-  Future<void> fetchPokemonColorName() async {
+  // Fetch Pokémon color name
+  Future<void> _fetchPokemonColorName() async {
     try {
       final colorName = await fetchPokemonColor(widget.name);
       setState(() {
-        pokemonColorName = colorName;
+        _pokemonColorName = colorName;
       });
     } catch (e) {
       debugPrint('Error fetching color: $e');
@@ -61,13 +62,23 @@ class _PokemonDetailsPageState extends State<PokemonDetailsPage> {
 
   @override
   Widget build(BuildContext context) {
-    final backgroundColor = getMaterialColor(pokemonColorName);
+    final backgroundColor = getMaterialColor(_pokemonColorName);
 
     return Scaffold(
       appBar: AppBar(
         title: const Text(''),
         backgroundColor: backgroundColor,
         elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios),
+          onPressed: () {
+            if (GoRouter.of(context).canPop()) {
+              GoRouter.of(context).pop();
+            } else {
+              GoRouter.of(context).go('/pokemon-list');
+            }
+          },
+        ),
       ),
       body: Container(
         color: backgroundColor,
@@ -118,36 +129,35 @@ class _PokemonDetailsPageState extends State<PokemonDetailsPage> {
                 padding: const EdgeInsets.all(20.0),
                 height: MediaQuery.of(context).size.height * 0.58,
                 width: MediaQuery.of(context).size.width,
-                child: isLoading
+                child: _isLoading
                     ? const Center(child: CircularProgressIndicator())
                     : SingleChildScrollView(
-                        child: pokemonDetails != null
+                        child: _pokemonDetails != null
                             ? Column(
                                 crossAxisAlignment: CrossAxisAlignment.center,
                                 children: [
                                   const SizedBox(height: 16),
                                   Text(
-                                    "ID: ${pokemonDetails!['id']}",
+                                    "ID: ${_pokemonDetails?['id'] ?? ''}",
                                     style: const TextStyle(fontSize: 16),
                                   ),
                                   Text(
-                                    "Height: ${pokemonDetails!['height']}",
+                                    "Height: ${_pokemonDetails?['height'] ?? ''}",
                                     style: const TextStyle(fontSize: 16),
                                   ),
                                   Text(
-                                    "Weight: ${pokemonDetails!['weight']}",
+                                    "Weight: ${_pokemonDetails?['weight'] ?? ''}",
                                     style: const TextStyle(fontSize: 16),
                                   ),
                                   Text(
-                                    "Base Experience: ${pokemonDetails!['base_experience']}",
+                                    "Base Experience: ${_pokemonDetails?['base_experience'] ?? ''}",
                                     style: const TextStyle(fontSize: 16),
                                   ),
                                   Text(
-                                    "Types: ${pokemonDetails!['types'].map((type) => type['type']['name']).join(', ')}",
+                                    "Types: ${(_pokemonDetails?['types'] as List<dynamic>?)?.map((type) => type['type']['name']).join(', ') ?? 'Unknown'}",
                                     style: const TextStyle(fontSize: 16),
                                   ),
                                   const SizedBox(height: 20),
-
                                   const Text(
                                     "Base Stats:",
                                     style: TextStyle(
@@ -155,48 +165,64 @@ class _PokemonDetailsPageState extends State<PokemonDetailsPage> {
                                       fontWeight: FontWeight.bold,
                                     ),
                                   ),
+                                  ...(_pokemonDetails?['stats']
+                                              as List<dynamic>?)
+                                          ?.map<Widget>((stat) {
+                                        final statName =
+                                            stat['stat']['name'] ?? '';
+                                        final statValue =
+                                            stat['base_stat'] ?? 0;
+                                        const maxStatValue = 150;
 
-                                  //Progress bar
-                                  ...pokemonDetails!['stats'].map<Widget>((stat) {
-                                    final statName = stat['stat']['name'];
-                                    final statValue = stat['base_stat'];
-                                    const maxStatValue = 150;
-                                    var barColor = Colors.red[400];
-
-                                    return Padding(
-                                      padding: const EdgeInsets.symmetric(vertical: 4.0),
-                                      child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            "$statName: $statValue",
-                                            style: const TextStyle(fontSize: 16),
-                                          ),
-                                          const SizedBox(height: 8),
-                                          Stack(
+                                        return Padding(
+                                          padding: const EdgeInsets.symmetric(
+                                              vertical: 4.0),
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
                                             children: [
-                                              Container(
-                                                height: 4,
-                                                width: double.infinity,
-                                                decoration: BoxDecoration(
-                                                  color: Colors.grey.shade300,
-                                                  borderRadius: BorderRadius.circular(8),
-                                                ),
+                                              Text(
+                                                "$statName: $statValue",
+                                                style: const TextStyle(
+                                                    fontSize: 16),
                                               ),
-                                              Container(
-                                                height: 4,
-                                                width: MediaQuery.of(context).size.width * 0.8 * (statValue / maxStatValue),
-                                                decoration: BoxDecoration(
-                                                  color: barColor,
-                                                  borderRadius: BorderRadius.circular(8),
-                                                ),
+                                              const SizedBox(height: 8),
+                                              Stack(
+                                                children: [
+                                                  Container(
+                                                    height: 4,
+                                                    width: double.infinity,
+                                                    decoration: BoxDecoration(
+                                                      color:
+                                                          Colors.grey.shade300,
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                              8),
+                                                    ),
+                                                  ),
+                                                  Container(
+                                                    height: 4,
+                                                    width:
+                                                        MediaQuery.of(context)
+                                                                .size
+                                                                .width *
+                                                            0.8 *
+                                                            (statValue /
+                                                                maxStatValue),
+                                                    decoration: BoxDecoration(
+                                                      color: Colors.red[400],
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                              8),
+                                                    ),
+                                                  ),
+                                                ],
                                               ),
                                             ],
                                           ),
-                                        ],
-                                      ),
-                                    );
-                                  }).toList(),
+                                        );
+                                      }).toList() ??
+                                      [],
                                 ],
                               )
                             : const Text(
