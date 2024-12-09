@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'dart:convert';
-import 'package:http/http.dart' as http;
+import 'bloc/pokemon_details_cubit.dart';
 import 'pokemon_utils.dart';
 
 class PokemonDetailsPage extends StatefulWidget {
@@ -15,224 +15,246 @@ class PokemonDetailsPage extends StatefulWidget {
   });
 
   @override
-  _PokemonDetailsPageState createState() => _PokemonDetailsPageState();
+  State<PokemonDetailsPage> createState() => _PokemonDetailsPageState();
 }
 
 class _PokemonDetailsPageState extends State<PokemonDetailsPage> {
-  Map<String, dynamic>? _pokemonDetails;
-  String? _pokemonColorName;
-  bool _isLoading = true;
+  Color backgroundColor = Colors.white;
+  Map<String, dynamic>? pokemonDetails;
+  bool isLoadingDetails = true;
+  String? errorMessage;
 
   @override
   void initState() {
     super.initState();
-    _fetchPokemonDetails();
-    _fetchPokemonColorName();
+    _fetchBackgroundColor();
   }
 
-  // HTTP GET request to fetch Pokémon details
-  Future<void> _fetchPokemonDetails() async {
-    final url = Uri.parse('https://pokeapi.co/api/v2/pokemon/${widget.name}');
-    final response = await http.get(url);
-
-    if (response.statusCode == 200) {
-      setState(() {
-        _pokemonDetails = jsonDecode(response.body);
-        _isLoading = false;
-      });
-    } else {
-      setState(() {
-        _isLoading = false;
-      });
-      throw Exception('Failed to load Pokémon details');
-    }
-  }
-
-  // Fetch Pokémon color name
-  Future<void> _fetchPokemonColorName() async {
+  Future<void> _fetchBackgroundColor() async {
     try {
       final colorName = await fetchPokemonColor(widget.name);
       setState(() {
-        _pokemonColorName = colorName;
+        backgroundColor = getMaterialColor(colorName);
       });
     } catch (e) {
-      debugPrint('Error fetching color: $e');
+      debugPrint('Error fetching Pokémon color: $e');
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final backgroundColor = getMaterialColor(_pokemonColorName);
-
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text(''),
-        backgroundColor: backgroundColor,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios),
-          onPressed: () {
-            if (GoRouter.of(context).canPop()) {
+    return BlocProvider(
+      create: (_) => PokemonDetailsCubit()..fetchPokemonDetails(widget.name),
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text(''),
+          backgroundColor: backgroundColor,
+          elevation: 0,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back_ios),
+            onPressed: () {
               GoRouter.of(context).pop();
-            } else {
-              GoRouter.of(context).go('/pokemon-list');
+            },
+          ),
+        ),
+        // handle state changes
+        body: BlocListener<PokemonDetailsCubit, PokemonDetailsState>(
+          listener: (context, state) {
+            if (state is PokemonDetailsLoading) {
+              setState(() {
+                isLoadingDetails = true;
+                errorMessage = null;
+              });
+            } else if (state is PokemonDetailsLoaded) {
+              setState(() {
+                isLoadingDetails = false; // display details if not loading
+                pokemonDetails = state.details;
+                errorMessage = null;
+              });
+            } else if (state is PokemonDetailsError) {
+              setState(() {
+                isLoadingDetails = false;
+                errorMessage = state.message;
+              });
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text(state.message)),
+              );
             }
           },
+          child: Stack(
+            children: [
+              _buildStaticContent(),
+              if (isLoadingDetails)
+                const Center(child: CircularProgressIndicator())
+              else if (errorMessage != null)
+                Center(
+                  child: Text(
+                    'Error: $errorMessage',
+                    style: const TextStyle(color: Colors.red),
+                  ),
+                )
+              else
+                _buildDetailsContent(),
+            ],
+          ),
         ),
       ),
-      body: Container(
-        color: backgroundColor,
-        child: Stack(
-          children: [
-            Align(
-              alignment: Alignment.topCenter,
-              child: Column(
-                children: [
-                  Text(
-                    widget.name[0].toUpperCase() + widget.name.substring(1),
-                    style: const TextStyle(
-                      fontSize: 32,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
+    );
+  }
+
+  Widget _buildStaticContent() {
+    return Container(
+      color: backgroundColor,
+      child: Stack(
+        children: [
+          Align(
+            alignment: Alignment.topCenter,
+            child: Column(
+              children: [
+                Text(
+                  widget.name[0].toUpperCase() + widget.name.substring(1),
+                  style: const TextStyle(
+                    fontSize: 32,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
                   ),
-                  const SizedBox(height: 16),
-                  Hero(
+                ),
+                const SizedBox(height: 16),
+                Material(
+                  color: Colors.transparent,
+                  child: Hero(
                     tag: widget.name,
                     child: Image.network(
                       widget.imageUrl,
                       height: 200,
                       width: 200,
+                      // display indicator if image is loading
+                      loadingBuilder: (context, child, loadingProgress) {
+                        if (loadingProgress == null) return child;
+                        return const Center(child: CircularProgressIndicator());
+                      },
+                      errorBuilder: (context, error, stackTrace) {
+                        return const Icon(
+                          Icons.broken_image,
+                          size: 200,
+                          color: Colors.grey,
+                        );
+                      },
                     ),
                   ),
-                ],
-              ),
-            ),
-            Align(
-              alignment: Alignment.bottomCenter,
-              child: Container(
-                decoration: const BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.only(
-                    topLeft: Radius.circular(24),
-                    topRight: Radius.circular(24),
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.grey,
-                      spreadRadius: 3,
-                      blurRadius: 4,
-                      offset: Offset(0, 3),
-                    ),
-                  ],
                 ),
-                padding: const EdgeInsets.all(20.0),
-                height: MediaQuery.of(context).size.height * 0.58,
-                width: MediaQuery.of(context).size.width,
-                child: _isLoading
-                    ? const Center(child: CircularProgressIndicator())
-                    : SingleChildScrollView(
-                        child: _pokemonDetails != null
-                            ? Column(
-                                crossAxisAlignment: CrossAxisAlignment.center,
-                                children: [
-                                  const SizedBox(height: 16),
-                                  Text(
-                                    "ID: ${_pokemonDetails?['id'] ?? ''}",
-                                    style: const TextStyle(fontSize: 16),
-                                  ),
-                                  Text(
-                                    "Height: ${_pokemonDetails?['height'] ?? ''}",
-                                    style: const TextStyle(fontSize: 16),
-                                  ),
-                                  Text(
-                                    "Weight: ${_pokemonDetails?['weight'] ?? ''}",
-                                    style: const TextStyle(fontSize: 16),
-                                  ),
-                                  Text(
-                                    "Base Experience: ${_pokemonDetails?['base_experience'] ?? ''}",
-                                    style: const TextStyle(fontSize: 16),
-                                  ),
-                                  Text(
-                                    "Types: ${(_pokemonDetails?['types'] as List<dynamic>?)?.map((type) => type['type']['name']).join(', ') ?? 'Unknown'}",
-                                    style: const TextStyle(fontSize: 16),
-                                  ),
-                                  const SizedBox(height: 20),
-                                  const Text(
-                                    "Base Stats:",
-                                    style: TextStyle(
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                  ...(_pokemonDetails?['stats']
-                                              as List<dynamic>?)
-                                          ?.map<Widget>((stat) {
-                                        final statName =
-                                            stat['stat']['name'] ?? '';
-                                        final statValue =
-                                            stat['base_stat'] ?? 0;
-                                        const maxStatValue = 150;
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
-                                        return Padding(
-                                          padding: const EdgeInsets.symmetric(
-                                              vertical: 4.0),
-                                          child: Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: [
-                                              Text(
-                                                "$statName: $statValue",
-                                                style: const TextStyle(
-                                                    fontSize: 16),
-                                              ),
-                                              const SizedBox(height: 8),
-                                              Stack(
-                                                children: [
-                                                  Container(
-                                                    height: 4,
-                                                    width: double.infinity,
-                                                    decoration: BoxDecoration(
-                                                      color:
-                                                          Colors.grey.shade300,
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                              8),
-                                                    ),
-                                                  ),
-                                                  Container(
-                                                    height: 4,
-                                                    width:
-                                                        MediaQuery.of(context)
-                                                                .size
-                                                                .width *
-                                                            0.8 *
-                                                            (statValue /
-                                                                maxStatValue),
-                                                    decoration: BoxDecoration(
-                                                      color: Colors.red[400],
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                              8),
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
-                                            ],
-                                          ),
-                                        );
-                                      }).toList() ??
-                                      [],
-                                ],
-                              )
-                            : const Text(
-                                'No details available.',
-                                style: TextStyle(fontSize: 16),
-                              ),
-                      ),
-              ),
+  Widget _buildDetailsContent() {
+    if (pokemonDetails == null) {
+      return const Center(child: Text('No details available.'));
+    }
+
+    final details = pokemonDetails!;
+    return Align(
+      alignment: Alignment.bottomCenter,
+      child: Container(
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(24),
+            topRight: Radius.circular(24),
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey,
+              spreadRadius: 3,
+              blurRadius: 4,
+              offset: Offset(0, 3),
             ),
           ],
+        ),
+        padding: const EdgeInsets.all(20.0),
+        height: MediaQuery.of(context).size.height * 0.58,
+        width: MediaQuery.of(context).size.width,
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              const SizedBox(height: 16),
+              Text(
+                "ID: ${details['id'] ?? ''}",
+                style: const TextStyle(fontSize: 16),
+              ),
+              Text(
+                "Height: ${details['height'] ?? ''}",
+                style: const TextStyle(fontSize: 16),
+              ),
+              Text(
+                "Weight: ${details['weight'] ?? ''}",
+                style: const TextStyle(fontSize: 16),
+              ),
+              Text(
+                "Base Experience: ${details['base_experience'] ?? ''}",
+                style: const TextStyle(fontSize: 16),
+              ),
+              Text(
+                "Types: ${(details['types'] as List<dynamic>?)?.map((type) => type['type']['name']).join(', ') ?? 'Unknown'}",
+                style: const TextStyle(fontSize: 16),
+              ),
+              const SizedBox(height: 20),
+              const Text(
+                "Base Stats:",
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              ...(details['stats'] as List<dynamic>?)?.map<Widget>((stat) {
+                    final statName = stat['stat']['name'] ?? '';
+                    final statValue = stat['base_stat'] ?? 0;
+                    const maxStatValue = 150;
+
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 4.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            "$statName: $statValue",
+                            style: const TextStyle(fontSize: 16),
+                          ),
+                          const SizedBox(height: 8),
+                          Stack(
+                            children: [
+                              Container(
+                                height: 4,
+                                width: double.infinity,
+                                decoration: BoxDecoration(
+                                  color: Colors.grey.shade300,
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                              ),
+                              Container(
+                                height: 4,
+                                width: MediaQuery.of(context).size.width *
+                                    0.8 *
+                                    (statValue / maxStatValue),
+                                decoration: BoxDecoration(
+                                  color: Colors.red[400],
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    );
+                  }).toList() ??
+                  [],
+            ],
+          ),
         ),
       ),
     );
