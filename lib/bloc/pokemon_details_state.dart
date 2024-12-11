@@ -8,7 +8,7 @@ class PokemonDetailsInitial extends PokemonDetailsState {}
 class PokemonDetailsLoading extends PokemonDetailsState {}
 
 class PokemonDetailsLoaded extends PokemonDetailsState {
-  final Map<String, dynamic> details;
+  final PokemonDetails details;
   PokemonDetailsLoaded(this.details);
 }
 

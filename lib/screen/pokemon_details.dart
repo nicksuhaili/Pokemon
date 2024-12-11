@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'bloc/pokemon_details_cubit.dart';
+import 'models/pokemon_details_models.dart';
 import 'pokemon_utils.dart';
 
 class PokemonDetailsPage extends StatefulWidget {
@@ -20,7 +21,7 @@ class PokemonDetailsPage extends StatefulWidget {
 
 class _PokemonDetailsPageState extends State<PokemonDetailsPage> {
   Color backgroundColor = Colors.white;
-  Map<String, dynamic>? pokemonDetails;
+  PokemonDetails? pokemonDetails;
   bool isLoadingDetails = true;
   String? errorMessage;
 
@@ -184,23 +185,24 @@ class _PokemonDetailsPageState extends State<PokemonDetailsPage> {
             children: [
               const SizedBox(height: 16),
               Text(
-                "ID: ${details['id'] ?? ''}",
+                "ID: ${details.id ?? ''}",
                 style: const TextStyle(fontSize: 16),
               ),
               Text(
-                "Height: ${details['height'] ?? ''}",
+                "Height: ${details.height ?? ''}",
                 style: const TextStyle(fontSize: 16),
               ),
               Text(
-                "Weight: ${details['weight'] ?? ''}",
+                "Weight: ${details.weight ?? ''}",
                 style: const TextStyle(fontSize: 16),
               ),
               Text(
-                "Base Experience: ${details['base_experience'] ?? ''}",
+                "Base Experience: ${details.baseExperience ?? ''}",
                 style: const TextStyle(fontSize: 16),
               ),
               Text(
-                "Types: ${(details['types'] as List<dynamic>?)?.map((type) => type['type']['name']).join(', ') ?? 'Unknown'}",
+                "Types: ${details.types.map((type) =>
+                type.type.name ?? 'Unknown').join(', ') ?? 'Unknown'}",
                 style: const TextStyle(fontSize: 16),
               ),
               const SizedBox(height: 20),
@@ -211,48 +213,47 @@ class _PokemonDetailsPageState extends State<PokemonDetailsPage> {
                   fontWeight: FontWeight.bold,
                 ),
               ),
-              ...(details['stats'] as List<dynamic>?)?.map<Widget>((stat) {
-                    final statName = stat['stat']['name'] ?? '';
-                    final statValue = stat['base_stat'] ?? 0;
-                    const maxStatValue = 150;
+              ...(details.stats.map<Widget>((stat) {
+                final statName = stat.stat.name ?? '';
+                final statValue = stat.baseStat ?? 0;
+                const maxStatValue = 150;
 
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 4.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                return Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 4.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        "$statName: $statValue",
+                        style: const TextStyle(fontSize: 16),
+                      ),
+                      const SizedBox(height: 8),
+                      Stack(
                         children: [
-                          Text(
-                            "$statName: $statValue",
-                            style: const TextStyle(fontSize: 16),
+                          Container(
+                            height: 8,
+                            width: double.infinity,
+                            decoration: BoxDecoration(
+                              color: Colors.grey.shade300,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
                           ),
-                          const SizedBox(height: 8),
-                          Stack(
-                            children: [
-                              Container(
-                                height: 4,
-                                width: double.infinity,
-                                decoration: BoxDecoration(
-                                  color: Colors.grey.shade300,
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                              ),
-                              Container(
-                                height: 4,
-                                width: MediaQuery.of(context).size.width *
-                                    0.8 *
-                                    (statValue / maxStatValue),
-                                decoration: BoxDecoration(
-                                  color: Colors.red[400],
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                              ),
-                            ],
+                          Container(
+                            height: 8,
+                            width: MediaQuery.of(context).size.width *
+                                0.8 *
+                                (statValue / maxStatValue),
+                            decoration: BoxDecoration(
+                              color: Colors.red[400],
+                              borderRadius: BorderRadius.circular(8),
+                            ),
                           ),
                         ],
                       ),
-                    );
-                  }).toList() ??
-                  [],
+                    ],
+                  ),
+                );
+              }).toList()),
             ],
           ),
         ),

@@ -1,28 +1,33 @@
-import 'dart:convert';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:http/http.dart' as http;
+import '../api/network_client.dart';
+import '../api/pokemon_api_service.dart';
+import '../models/pokemon_details_models.dart';
 
 part 'pokemon_details_state.dart';
 
-// Manage state changes, fetching data api
-
 class PokemonDetailsCubit extends Cubit<PokemonDetailsState> {
-  PokemonDetailsCubit() : super(PokemonDetailsInitial());
+
+  final PokemonApiService apiService;
+  //use NetworkClient to make api call
+  PokemonDetailsCubit(): apiService = PokemonApiService(NetworkClient.createDio()),
+        super(PokemonDetailsInitial());
 
   Future<void> fetchPokemonDetails(String name) async {
+
     emit(PokemonDetailsLoading());
     try {
-      final url = Uri.parse('https://pokeapi.co/api/v2/pokemon/$name');
-      final response = await http.get(url);
-
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        emit(PokemonDetailsLoaded(data));
-      } else {
-        emit(PokemonDetailsError('Failed to load Pokémon details.'));
+      //get the pokemon data
+      final details = await apiService.getPokemonDetails(name);
+      //if the data is null
+      if (details == null) {
+        emit(PokemonDetailsError("Pokémon details could not be loaded."));
+        return;
       }
+      //emit the PokemonDetailsLoaded with data
+      emit(PokemonDetailsLoaded(details));
     } catch (e) {
-      emit(PokemonDetailsError(e.toString()));
+      emit(PokemonDetailsError("Error fetching Pokémon details: $e"));
     }
+
   }
 }
