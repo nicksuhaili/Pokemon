@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:lottie/lottie.dart';
 import 'package:pokemon/bloc/pokemon_list_bloc.dart';
+import 'package:pokemon/bloc/pokemon_list_event.dart';
 import 'package:pokemon/bloc/pokemon_list_state.dart';
 import 'package:pokemon/pokemon_utils.dart';
-import 'package:pokemon/routes.dart';
+import 'package:pokemon/navigation/routes.dart';
 
 class PokemonListPage extends StatelessWidget {
   const PokemonListPage({super.key});
@@ -29,7 +30,15 @@ class _PokemonListViewState extends State<_PokemonListView>
   @override
   void initState() {
     super.initState();
-    _animationController = AnimationController(vsync: this);
+    _animationController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 2),
+    );
+    _animationController.forward();
+
+    if (context.read<PokemonListBloc>().state is! PokemonListLoaded) {
+      context.read<PokemonListBloc>().add(FetchPokemonList());
+    }
   }
 
   @override
@@ -121,7 +130,7 @@ class _PokemonListViewState extends State<_PokemonListView>
                                     style: const TextStyle(
                                       fontSize: 16,
                                       fontWeight: FontWeight.bold,
-                                      color: Colors.white,
+                                      color: Colors.black,
                                     ),
                                   ),
                                   const Spacer(),

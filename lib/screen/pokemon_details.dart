@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'bloc/pokemon_details_cubit.dart';
-import 'models/pokemon_details_models.dart';
-import 'pokemon_utils.dart';
+import 'package:pokemon/di/service_locator.dart';
+import '../bloc/pokemon_details_cubit.dart';
+import '../models/pokemon_details_models.dart';
+import '../pokemon_utils.dart';
 
 class PokemonDetailsPage extends StatefulWidget {
   final String name;
@@ -45,7 +46,7 @@ class _PokemonDetailsPageState extends State<PokemonDetailsPage> {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (_) => PokemonDetailsCubit()..fetchPokemonDetails(widget.name),
+      create: (_) => PokemonDetailsCubit(repository: getIt())..fetchPokemonDetails(widget.name),
       child: Scaffold(
         appBar: AppBar(
           title: const Text(''),

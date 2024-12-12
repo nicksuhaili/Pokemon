@@ -1,8 +1,8 @@
 import 'package:flutter/cupertino.dart';
 import 'package:go_router/go_router.dart';
-import 'package:pokemon/pokemon_details.dart';
-import 'package:pokemon/pokemon_list.dart';
-import 'package:pokemon/splash_screen.dart';
+import 'package:pokemon/screen/pokemon_details.dart';
+import 'package:pokemon/screen/pokemon_list.dart';
+import 'package:pokemon/screen/splash_screen.dart';
 
 part 'routes.g.dart';
 
