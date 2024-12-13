@@ -46,7 +46,7 @@ class _PokemonDetailsPageState extends State<PokemonDetailsPage> {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (_) => PokemonDetailsCubit(repository: getIt())..fetchPokemonDetails(widget.name),
+      create: (_) => getIt<PokemonDetailsCubit>()..fetchPokemonDetails(widget.name),
       child: Scaffold(
         appBar: AppBar(
           title: const Text(''),

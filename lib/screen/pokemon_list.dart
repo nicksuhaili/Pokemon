@@ -7,12 +7,19 @@ import 'package:pokemon/bloc/pokemon_list_state.dart';
 import 'package:pokemon/pokemon_utils.dart';
 import 'package:pokemon/navigation/routes.dart';
 
+import '../di/service_locator.dart';
+
 class PokemonListPage extends StatelessWidget {
   const PokemonListPage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return const _PokemonListView();
+
+    final pokemonListBloc = getIt<PokemonListBloc>();
+    return BlocProvider<PokemonListBloc>(
+      create: (_) => pokemonListBloc..add(FetchPokemonList()),
+      child: const _PokemonListView(),
+    );
   }
 }
 
@@ -35,10 +42,6 @@ class _PokemonListViewState extends State<_PokemonListView>
       duration: const Duration(seconds: 2),
     );
     _animationController.forward();
-
-    if (context.read<PokemonListBloc>().state is! PokemonListLoaded) {
-      context.read<PokemonListBloc>().add(FetchPokemonList());
-    }
   }
 
   @override
@@ -50,6 +53,7 @@ class _PokemonListViewState extends State<_PokemonListView>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
@@ -130,7 +134,7 @@ class _PokemonListViewState extends State<_PokemonListView>
                                     style: const TextStyle(
                                       fontSize: 16,
                                       fontWeight: FontWeight.bold,
-                                      color: Colors.black,
+                                      color: Colors.white,
                                     ),
                                   ),
                                   const Spacer(),
