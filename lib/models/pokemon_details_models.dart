@@ -1,70 +1,63 @@
-import 'package:json_annotation/json_annotation.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
 
+part 'pokemon_details_models.freezed.dart';
 part 'pokemon_details_models.g.dart';
 
 // Define the pokemon data responses from api
-@JsonSerializable()
-class PokemonDetails {
-  final int id;
-  final String name;
-  final int? height;
-  final int? weight;
-  @JsonKey(name: "base_experience")
-  final int? baseExperience;
-  final List<TypeData> types;
-  final List<StatData> stats;
+@freezed
+class PokemonDetails with _$PokemonDetails {
+  const factory PokemonDetails({
+    required int id,
+    required String name,
+    int? height,
+    int? weight,
+    @JsonKey(name: "base_experience") int? baseExperience,
+    required List<TypeData> types,
+    required List<StatData> stats,
+  }) = _PokemonDetails;
 
-  PokemonDetails({
-    required this.id,
-    required this.name,
-    this.height,
-    this.weight,
-    this.baseExperience,
-    required this.types,
-    required this.stats
-  });
-  // Map JSON data from api to dart objects ( from json and to json in the generated file)
+  // Map JSON data from api to dart objects ( from json in the generated file)
   factory PokemonDetails.fromJson(Map<String, dynamic> json) =>
       _$PokemonDetailsFromJson(json);
-  Map<String, dynamic> toJson() => _$PokemonDetailsToJson(this);
-
 }
 
 //generate code for parsing json
-@JsonSerializable()
-class TypeData {
-  final Type type;
-  TypeData({required this.type});
+@freezed
+class TypeData with _$TypeData {
+  const factory TypeData ({
+    required Type type,
+  }) = _TypeData;
 
   factory TypeData.fromJson(Map<String, dynamic> json) =>
       _$TypeDataFromJson(json);
-  Map<String, dynamic> toJson() => _$TypeDataToJson(this);
 }
-@JsonSerializable()
-class Type {
-  final String? name;
-  Type({this.name});
+
+@freezed
+class Type with _$Type {
+  const factory Type ({
+    String? name,
+
+  }) = _Type;
 
   factory Type.fromJson(Map<String, dynamic> json) => _$TypeFromJson(json);
-  Map<String, dynamic> toJson() => _$TypeToJson(this);
 }
 
-@JsonSerializable()
-class StatData {
-  @JsonKey(name: "base_stat")
-  final int? baseStat;
-  final Stat stat;
-  StatData({this.baseStat, required this.stat});
+@freezed
+class StatData with _$StatData {
+  const factory StatData ({
+    @JsonKey(name: "base_stat") int? baseStat,
+    required Stat stat,
+  }) = _StatData;
 
   factory StatData.fromJson(Map<String, dynamic> json) =>
       _$StatDataFromJson(json);
-  Map<String, dynamic> toJson() => _$StatDataToJson(this);
 }
-@JsonSerializable()
-class Stat {
-  final String? name;
-  Stat({this.name});
+
+@freezed
+class Stat with _$Stat {
+  const factory Stat ({
+    String? name,
+  }) = _Stat;
 
   factory Stat.fromJson(Map<String, dynamic> json) => _$StatFromJson(json);
-  Map<String, dynamic> toJson() => _$StatToJson(this);
 }
