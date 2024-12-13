@@ -8,10 +8,6 @@ class PokemonDetailsCubit extends Cubit<PokemonDetailsState> {
 
   final PokemonRepository repository;
   PokemonDetailsCubit({required this.repository}) : super(PokemonDetailsInitial());
-  
-  // final PokemonApiService apiService;
-  // PokemonDetailsCubit(): apiService = PokemonApiService(NetworkClient.createDio()),
-  //       super(PokemonDetailsInitial());
 
   Future<void> fetchPokemonDetails(String name) async {
 
@@ -19,6 +15,7 @@ class PokemonDetailsCubit extends Cubit<PokemonDetailsState> {
     try {
       //get the pokemon data
       final details = await repository.getPokemonDetails(name);
+
       //if the data is null
       if (details == null) {
         emit(PokemonDetailsError("Pokémon details could not be loaded."));

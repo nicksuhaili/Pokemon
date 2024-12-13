@@ -21,6 +21,4 @@ void setupServiceLocator() {
   getIt.registerFactory(() => PokemonListBloc(repository: getIt<PokemonRepository>()));
   getIt.registerFactory(() => PokemonDetailsCubit(repository: getIt<PokemonRepository>()));
 
-
-
 }
