@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
-import 'package:pokemon/routes.dart';
+import 'package:pokemon/navigation/routes.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
