@@ -3,16 +3,18 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
 // HTTP Get request to fetch color from the species API.
-Future<String?> fetchPokemonColor(String pokemonName) async {
-  final url =
-      Uri.parse('https://pokeapi.co/api/v2/pokemon-species/$pokemonName');
-  final response = await http.get(url);
-  // parse JSON response to extract color
-  if (response.statusCode == 200) {
-    final data = jsonDecode(response.body);
-    return data['color']['name'] as String?;
-  } else {
-    throw Exception('Failed to fetch Pokémon color');
+Future<String> fetchPokemonColor(String pokemonName) async {
+  try {
+    final url = Uri.parse('https://pokeapi.co/api/v2/pokemon-species/$pokemonName');
+    final response = await http.get(url);
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      return data['color']['name'] ?? 'grey';
+    } else {
+      return 'grey';
+    }
+  } catch (e) {
+    return 'grey';
   }
 }
 
